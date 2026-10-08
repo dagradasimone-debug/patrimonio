@@ -1,0 +1,471 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Patrimonio</title>
+<meta name="theme-color" content="#0B0D10">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Patrimonio">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="icon" type="image/png" href="icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0B0D10; --card:#14171C; --line:#23272E; --line2:#1E2228; --chip:#1C2026;
+  --txt:#E8EAED; --mut:#9AA1AB; --dim:#6B727C; --vers:#7C838D;
+  --pos:#5BD6A0; --neg:#F2876B;
+  --core:#7C9CFF; --sat:#5BD6A0; --cry:#C79BFF; --cry2:#8A6BB8; --oro:#E3C77A;
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--txt);font-family:Manrope,system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+body{min-height:100vh}
+a{color:var(--mut);text-decoration:none}
+button{font:inherit;color:inherit}
+.num{font-family:'Space Grotesk',sans-serif;font-variant-numeric:tabular-nums}
+.wrap{max-width:1120px;margin:0 auto;padding:calc(24px + env(safe-area-inset-top)) 20px calc(56px + env(safe-area-inset-bottom));display:flex;flex-direction:column;gap:28px}
+header{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:16px}
+.brand{display:flex;align-items:center;gap:12px;font-weight:700;font-size:17px}
+.logo{width:32px;height:32px;border-radius:9px;background:var(--pos);display:flex;align-items:center;justify-content:center}
+nav{display:flex;gap:4px;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:4px;overflow-x:auto;scrollbar-width:none;max-width:100%}
+nav::-webkit-scrollbar{display:none}
+nav a{padding:9px 14px;border-radius:9px;font-size:14px;font-weight:500;white-space:nowrap;min-height:40px;display:flex;align-items:center}
+nav a.on{background:var(--line);color:var(--txt);font-weight:600}
+nav a:hover{color:var(--txt)}
+.hero{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:flex-end;gap:24px}
+.hero .lbl{display:flex;align-items:center;gap:8px;font-size:14px;color:var(--mut);font-weight:500}
+.dot{width:8px;height:8px;border-radius:4px;flex-shrink:0}
+.big{font-size:72px;font-weight:500;letter-spacing:-.035em;line-height:1}
+.badge{font-weight:600;padding:5px 10px;border-radius:8px}
+.badge.p{background:rgba(91,214,160,.14);color:var(--pos)}
+.badge.n{background:rgba(242,135,107,.14);color:var(--neg)}
+.p{color:var(--pos)} .n{color:var(--neg)}
+.tiles{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;min-width:300px}
+.tile{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px 14px;display:flex;flex-direction:column;gap:4px}
+.tile .t{font-size:12px;color:var(--mut)}
+.tile .v{font-size:18px;font-weight:500}
+.tile .s{font-size:12px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:20px;display:flex;flex-direction:column;gap:14px}
+.card.big-pad{padding:24px;gap:16px}
+.row{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
+.h2{font-weight:600;font-size:16px}
+.sub{font-size:13px;color:var(--mut)}
+.mini{font-size:12px;color:var(--mut)}
+.seg{display:flex;gap:4px;font-size:13px}
+.seg button{background:none;border:0;padding:8px 11px;border-radius:8px;color:var(--mut);cursor:pointer;min-height:36px}
+.seg button.on{background:var(--line);color:var(--txt);font-weight:600}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px}
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:14px}
+.alloc{display:flex;height:12px;border-radius:6px;overflow:hidden;gap:3px}
+.bar{position:relative;height:6px;background:var(--line);border-radius:3px}
+.bar>i{display:block;height:6px;border-radius:3px}
+.bar>b{position:absolute;top:-3px;width:2px;height:12px;background:var(--txt)}
+.ico{width:40px;height:40px;border-radius:12px;background:var(--chip);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.sec-card{color:var(--txt)}
+.sec-card:hover{border-color:#3A404A}
+.list>div{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid var(--line2)}
+.list>div:last-child{border-bottom:0}
+table{width:100%;border-collapse:collapse;font-size:14px;font-variant-numeric:tabular-nums}
+th{font-weight:500;font-size:12px;color:var(--mut);padding:8px 0;border-bottom:1px solid var(--line);text-align:right}
+td{padding:9px 0;border-bottom:1px solid var(--line2);text-align:right}
+th:first-child,td:first-child{text-align:left}
+tr:last-child td{border-bottom:0}
+.scroll{overflow-x:auto}
+footer{font-size:12px;color:var(--dim);display:flex;flex-wrap:wrap;justify-content:space-between;gap:8px;border-top:1px solid var(--line2);padding-top:16px}
+footer button{background:none;border:0;color:var(--dim);text-decoration:underline;cursor:pointer;padding:0}
+.note{font-size:13px;color:var(--mut);line-height:1.5}
+/* chart */
+.chart{display:flex;flex-direction:column;gap:8px}
+.chart .plot{display:flex;gap:12px}
+.chart .yax{position:relative;width:62px;flex-shrink:0;font-size:12px;color:var(--dim);text-align:right}
+.chart .yax span{position:absolute;right:0;transform:translateY(-50%);white-space:nowrap}
+.chart .area{position:relative;flex:1 1 auto;min-width:0;touch-action:pan-y}
+.chart svg{display:block;width:100%}
+.chart .xax{display:flex;justify-content:space-between;font-size:12px;color:var(--dim);padding-left:74px}
+.chart .leg{display:flex;flex-wrap:wrap;gap:18px;font-size:12px;color:var(--mut);padding-left:74px}
+.chart .leg span{display:flex;align-items:center;gap:6px}
+.chart .pt{position:absolute;width:9px;height:9px;border-radius:50%;background:#fff;transform:translate(-50%,-50%);pointer-events:none}
+.chart .vl{position:absolute;top:0;bottom:0;width:1px;background:#3A404A;pointer-events:none;display:none}
+.chart .tip{position:absolute;top:-6px;transform:translateX(-50%);background:#23272E;border-radius:8px;padding:6px 10px;font-size:12px;white-space:nowrap;pointer-events:none;display:none;z-index:2}
+.chart .empty{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:13px;color:var(--mut);text-align:center;padding:0 16px}
+/* setup */
+.setup{max-width:440px;margin:12vh auto 0;padding:24px;display:flex;flex-direction:column;gap:18px}
+.setup input{width:100%;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px;color:var(--txt);font:inherit;font-size:15px}
+.setup button.go{background:var(--pos);color:#0B0D10;border:0;border-radius:12px;padding:14px;font-weight:700;font-size:15px;cursor:pointer;min-height:48px}
+.banner{background:rgba(242,135,107,.12);color:var(--neg);border-radius:12px;padding:10px 14px;font-size:13px}
+.load{display:flex;align-items:center;justify-content:center;min-height:70vh;color:var(--mut);font-size:14px}
+@media (max-width:700px){
+  .wrap{padding-left:16px;padding-right:16px;gap:22px}
+  header{flex-direction:column;align-items:stretch}
+  .big{font-size:46px}
+  .tiles{min-width:0;width:100%}
+  .hero{gap:18px}
+  .chart .yax{width:48px}
+  .chart .xax,.chart .leg{padding-left:60px}
+  .card{padding:16px}
+}
+</style>
+</head>
+<body>
+<div id="app"><div class="load">Caricamento…</div></div>
+<script>
+(function(){
+'use strict';
+const LS_CODE='patrimonio.codice', LS_DATA='patrimonio.dati';
+const PAGES=[['home','Home'],['core','PAC Core'],['satellite','Satellite'],['crypto','Crypto'],['oro','Oro'],['recap','Recap'],['2030','2030']];
+const IX={tot:[1,2],core:[3,8],satellite:[4,9],ck:[5,10],cs:[6,11],oro:[7,12]};
+const SEZ={core:{nome:'PAC Core',col:'var(--core)',hex:'#7C9CFF',app:'Trade Republic'},satellite:{nome:'PAC Satellite',col:'var(--sat)',hex:'#5BD6A0',app:'Scalable'},crypto:{nome:'Crypto',col:'var(--cry)',hex:'#C79BFF',app:'Kraken + Scalable'},oro:{nome:'Oro fisico',col:'var(--oro)',hex:'#E3C77A',app:'GoldAvenue'}};
+const RANGES=[['1S','1S'],['1M','1M'],['1A','1A'],['T','Tutto']];
+let D=null, offline=false, errore='', range={}, charts={};
+
+/* ---------- formattazione ---------- */
+const f2=new Intl.NumberFormat('it-IT',{minimumFractionDigits:2,maximumFractionDigits:2,useGrouping:'always'});
+const f1=new Intl.NumberFormat('it-IT',{minimumFractionDigits:1,maximumFractionDigits:1});
+const f0=new Intl.NumberFormat('it-IT',{maximumFractionDigits:0,useGrouping:'always'});
+const eur=v=>v==null?'—':f2.format(v)+' €';
+const eur0=v=>f0.format(v)+' €';
+const sgn=(v,f)=>(v>0?'+':v<0?'−':'')+f.format(Math.abs(v));
+const sE=v=>sgn(v,f2)+' €';
+const sP=v=>sgn(v*100,f2)+'%';
+const cls=v=>v<0?'n':'p';
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const MESI=['gen','feb','mar','apr','mag','giu','lug','ago','set','ott','nov','dic'];
+const MESIL=['Gennaio','Febbraio','Marzo','Aprile','Maggio','Giugno','Luglio','Agosto','Settembre','Ottobre','Novembre','Dicembre'];
+const GG=['dom','lun','mar','mer','gio','ven','sab'];
+const dShort=t=>{const d=new Date(t);return d.getDate()+' '+MESI[d.getMonth()]};
+const dMonth=t=>{const d=new Date(t);return MESI[d.getMonth()]+' '+d.getFullYear()};
+const dFull=t=>{const d=new Date(t);return GG[d.getDay()]+' '+d.getDate()+' '+MESI[d.getMonth()]+', '+String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0')};
+const meseMs=k=>{const [y,m]=k.split('-').map(Number);return new Date(y,m-1,1).getTime()};
+const meseLbl=k=>{const [y,m]=k.split('-').map(Number);return MESI[m-1]+' '+y};
+
+/* ---------- icone ---------- */
+const S='stroke="#C9CED6" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round"';
+const ICONS={
+us:'<svg width="26" height="18" viewBox="0 0 26 18" aria-hidden="true"><rect width="26" height="18" rx="2" fill="#E8EAED"/><rect width="26" height="2.6" fill="#D9534F"/><rect y="5.1" width="26" height="2.6" fill="#D9534F"/><rect y="10.3" width="26" height="2.6" fill="#D9534F"/><rect y="15.4" width="26" height="2.6" fill="#D9534F"/><rect width="11" height="9.7" fill="#3B5BA9"/></svg>',
+globe:`<svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9" ${S}/><path d="M3 12h18M12 3c2.5 2.6 3.8 5.6 3.8 9s-1.3 6.4-3.8 9M12 3c-2.5 2.6-3.8 5.6-3.8 9s1.3 6.4 3.8 9" ${S}/></svg>`,
+em:`<svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9" ${S}/><polyline points="7.5 14.5 11 11 13 13 16.5 9.5" ${S}/><polyline points="13.5 9.5 16.5 9.5 16.5 12.5" ${S}/></svg>`,
+sprout:`<svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21v-9M12 12c0-4 3-6 7-6 0 4-3 6-7 6zM12 14c0-3-2.5-5-6-5 0 3 2.5 5 6 5z" ${S}/></svg>`,
+chip:`<svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true"><rect x="6" y="6" width="12" height="12" rx="2" ${S}/><rect x="9.5" y="9.5" width="5" height="5" ${S}/><path d="M9 3v3M15 3v3M9 18v3M15 18v3M3 9h3M3 15h3M18 9h3M18 15h3" ${S}/></svg>`,
+pick:`<svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9c4-4 10-5 16-3M13 6.5 6 21" ${S}/></svg>`,
+eu:'<svg width="26" height="18" viewBox="0 0 26 18" aria-hidden="true"><rect width="26" height="18" rx="2" fill="#2E4FA3"/>'+[0,1,2,3,4,5,6,7].map(a=>`<circle cx="${(13+5*Math.cos(a*Math.PI/4)).toFixed(1)}" cy="${(9+5*Math.sin(a*Math.PI/4)).toFixed(1)}" r="1.1" fill="#F2C94C"/>`).join('')+'</svg>',
+bank:`<svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 9 12 4l9 5M5 10v8M9.5 10v8M14.5 10v8M19 10v8M3 20h18" ${S}/></svg>`,
+uk:'<svg width="26" height="18" viewBox="0 0 26 18" aria-hidden="true"><rect width="26" height="18" rx="2" fill="#2B4A8B"/><path d="M0 0 26 18M26 0 0 18" stroke="#E8EAED" stroke-width="3"/><path d="M13 0v18M0 9h26" stroke="#E8EAED" stroke-width="5"/><path d="M13 0v18M0 9h26" stroke="#D9534F" stroke-width="2.6"/></svg>',
+star:`<svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true"><polygon points="12 3.5 14.6 9 20.5 9.6 16 13.5 17.3 19.4 12 16.3 6.7 19.4 8 13.5 3.5 9.6 9.4 9" ${S}/></svg>`,
+case:`<svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="7.5" width="17" height="12" rx="2" ${S}/><path d="M9 7.5V5.5h6v2M3.5 12.5h17" ${S}/></svg>`,
+coins:`<svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true"><ellipse cx="12" cy="6.5" rx="7" ry="2.8" ${S}/><path d="M5 6.5v5c0 1.5 3.1 2.8 7 2.8s7-1.3 7-2.8v-5M5 11.5v5c0 1.5 3.1 2.8 7 2.8s7-1.3 7-2.8v-5" ${S}/></svg>`,
+bar:'<svg width="26" height="16" viewBox="0 0 26 16" aria-hidden="true"><path d="M5 1.5h16l3.5 13h-23z" fill="#E3C77A"/><path d="M7.5 4.5h11" stroke="#A8893F" stroke-width="1.4"/></svg>',
+};
+const LOGO='<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#0B0D10" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 17 9 11 13 15 21 7"/><polyline points="15 7 21 7 21 13"/></svg>';
+
+/* ---------- dati derivati ---------- */
+function sezVal(k){const s=D.sezioni;if(k==='crypto')return s.valori.crypto_kraken+s.valori.crypto_scalable;if(k==='tot')return s.totale;return s.valori[k]}
+function sezVer(k){const s=D.sezioni;if(k==='crypto')return s.versati.crypto_kraken+s.versati.crypto_scalable;if(k==='tot')return s.versato;return s.versati[k]}
+function hv(r,k){if(k==='crypto'){const a=r[5],b=r[6];return a==null||b==null?null:a+b}return r[IX[k][0]]}
+function hw(r,k){if(k==='crypto'){const a=r[10],b=r[11];return a==null||b==null?null:a+b}return r[IX[k][1]]}
+function versMensile(k){
+  const cs=D.sezioni.versati.crypto_scalable, mcs=D.meseCryptoScalable;
+  return D.mensile.map(m=>{
+    const tr=m.tr||0, sc=m.scalable||0, kr=m.kraken||0, oro=m.oro||0, x=m.mese===mcs?cs:0;
+    let v;
+    if(k==='core')v=tr; else if(k==='satellite')v=sc-x; else if(k==='crypto')v=kr+x; else if(k==='oro')v=oro; else v=tr+sc+kr+oro;
+    return [meseMs(m.mese),v];
+  }).filter(x=>x[1]);
+}
+function versCum(k){let c=0;return versMensile(k).map(([t,v])=>[t,c+=v])}
+function versA(steps,t){let v=0;for(const s of steps){if(s[0]<=t)v=s[1];else break}return v}
+function variazioni(k){
+  const h=D.storico;if(!h.length)return [null,null,null];
+  const L=h[h.length-1],now=new Date();
+  const basi=[new Date(now.getFullYear(),now.getMonth(),now.getDate()).getTime(),Date.now()-7*864e5,Date.now()-30*864e5];
+  const tolleranza=[36*36e5,3*864e5,7*864e5];
+  return basi.map((b,i)=>{let B=null;for(const r of h){if(r[0]<b)B=r;else break}
+    if(!B||B===L||b-B[0]>tolleranza[i])return null;
+    const v0=hv(B,k),v1=hv(L,k),w0=hw(B,k),w1=hw(L,k);
+    if(v0==null||v1==null||w0==null||w1==null||!v0)return null;
+    const d=(v1-v0)-(w1-w0);return {d,p:d/v0}});
+}
+
+/* ---------- pezzi di pagina ---------- */
+function headerHTML(pg){
+  return `<header><div class="brand"><div class="logo">${LOGO}</div>Patrimonio</div>
+  <nav aria-label="Sezioni">${PAGES.map(([id,n])=>`<a href="#${id}" class="${id===pg?'on':''}">${n}</a>`).join('')}</nav></header>
+  ${offline?`<div class="banner">Offline: dati del ${dFull(D.aggiornato)}. ${esc(errore)}</div>`:''}`;
+}
+function heroHTML(lbl,k,extra){
+  const v=sezVal(k),w=sezVer(k),d=v-w,va=variazioni(k);
+  const tile=(t,x)=>`<div class="tile"><div class="t">${t}</div>${x?`<div class="v num ${cls(x.d)}">${sE(x.d)}</div><div class="s ${cls(x.d)}">${sP(x.p)}</div>`:'<div class="v num" style="color:var(--dim)">—</div>'}</div>`;
+  return `<section class="hero"><div style="display:flex;flex-direction:column;gap:10px;min-width:0">
+    <div class="lbl">${lbl}</div>
+    <div class="big num">${eur(v)}</div>
+    <div style="display:flex;flex-wrap:wrap;align-items:center;gap:10px;font-size:15px">
+      <span class="badge ${cls(d)}">${sE(d)} · ${sP(w?d/w:0)}</span><span style="color:var(--mut)">su ${eur(w)} versati</span>${extra||''}</div></div>
+    <div class="tiles">${tile('Oggi',va[0])}${tile('Settimana',va[1])}${tile('Mese',va[2])}</div></section>`;
+}
+function footerHTML(txt){
+  return `<footer><span>${txt||'Aggiornamento automatico alle 9:30, 14:30 e 22:00'}</span><span>Ultimo aggiornamento: ${dFull(D.aggiornato)} · <button id="reset">cambia codice</button></span></footer>`;
+}
+function dotLbl(col,t){return `<span class="dot" style="background:${col}"></span>${t}`}
+
+/* ---------- grafico ---------- */
+function niceStep(span){const r=span/3,p=Math.pow(10,Math.floor(Math.log10(r))),n=r/p;return (n<=1?1:n<=2?2:n<=2.5?2.5:n<=5?5:10)*p}
+function chartCard(id,k,titolo,opz){
+  opz=opz||{};
+  const rg=range[id]||'1S';
+  return `<section class="card big-pad"><div class="row"><div class="h2">${titolo||'Andamento'}</div>
+    <div class="seg" role="group" aria-label="Periodo">${RANGES.map(([r,n])=>`<button data-chart="${id}" data-range="${r}" class="${r===rg?'on':''}">${n}</button>`).join('')}</div></div>
+    <div class="chart" id="ch-${id}"></div></section>`;
+}
+function disegnaGrafico(id,k){
+  const el=document.getElementById('ch-'+id);if(!el)return;
+  const rg=range[id]||'1S', now=Date.now(), steps=versCum(k);
+  const h=D.storico.filter(r=>hv(r,k)!=null);
+  let t0;
+  if(rg==='1S')t0=now-7*864e5;else if(rg==='1M')t0=now-30*864e5;else if(rg==='1A')t0=now-365*864e5;
+  else t0=Math.min(steps.length?steps[0][0]:now,h.length?h[0][0]:now);
+  const pts=h.filter(r=>r[0]>=t0).map(r=>[r[0],hv(r,k)]);
+  const vl=[[t0,versA(steps,t0)]];steps.forEach(s=>{if(s[0]>t0)vl.push(s)});vl.push([now,versA(steps,now)]);
+  const all=pts.map(p=>p[1]).concat(vl.map(p=>p[1]));
+  let lo=Math.min(...all),hi=Math.max(...all);
+  if(rg==='T'||rg==='1A')lo=Math.min(lo,0);
+  if(hi-lo<1){hi+=50;lo-=50}
+  const pad=(hi-lo)*.08;hi+=pad;if(lo!==0)lo-=pad;
+  const st=niceStep(hi-lo);const tick0=Math.ceil(lo/st)*st;const ticks=[];for(let v=tick0;v<=hi+1e-9;v+=st)ticks.push(v);
+  const H=220,X=t=>(t-t0)/(now-t0)*1000,Y=v=>12+(1-(v-lo)/(hi-lo))*(H-24);
+  const vPath='M'+vl.map((p,i)=>i===0?`${X(p[0]).toFixed(1)},${Y(p[1]).toFixed(1)}`:`H${X(p[0]).toFixed(1)} V${Y(p[1]).toFixed(1)}`).join(' ');
+  const line=pts.map(p=>`${X(p[0]).toFixed(1)},${Y(p[1]).toFixed(1)}`).join(' ');
+  const area=pts.length>1?`M${X(pts[0][0]).toFixed(1)},${H} L`+line.replace(/ /g,' L')+` L${X(pts[pts.length-1][0]).toFixed(1)},${H} Z`:'';
+  const last=pts[pts.length-1];
+  const fmtX=rg==='1S'?(t=>{const d=new Date(t);return GG[d.getDay()]+' '+d.getDate()}):rg==='1M'?dShort:dMonth;
+  const xs=[0,1,2,3].map(i=>fmtX(t0+(now-t0)*i/3));
+  const yfmt=v=>Math.abs(st)<1?f2.format(v)+' €':eur0(v);
+  el.innerHTML=`<div class="plot"><div class="yax" style="height:240px">${ticks.map(v=>`<span style="top:${(Y(v)/H*100).toFixed(2)}%">${yfmt(v)}</span>`).join('')}</div>
+    <div class="area" style="height:240px">
+      <svg height="240" viewBox="0 0 1000 ${H}" preserveAspectRatio="none" aria-label="Grafico valore e versato">
+        <defs><linearGradient id="g-${id}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FFFFFF" stop-opacity=".14"/><stop offset="1" stop-color="#FFFFFF" stop-opacity="0"/></linearGradient></defs>
+        ${ticks.map(v=>`<line x1="0" x2="1000" y1="${Y(v).toFixed(1)}" y2="${Y(v).toFixed(1)}" stroke="#1E2228" stroke-width="1" vector-effect="non-scaling-stroke"/>`).join('')}
+        ${area?`<path d="${area}" fill="url(#g-${id})"/>`:''}
+        <path d="${vPath}" fill="none" stroke="#7C838D" stroke-width="2" vector-effect="non-scaling-stroke"/>
+        ${pts.length>1?`<polyline points="${line}" fill="none" stroke="#FFFFFF" stroke-width="2.5" stroke-linejoin="round" vector-effect="non-scaling-stroke"/>`:''}
+      </svg>
+      ${last?`<div class="pt" style="left:${(X(last[0])/10).toFixed(2)}%;top:${(Y(last[1])/H*100).toFixed(2)}%"></div>`:''}
+      ${pts.length?'':'<div class="empty">Nessun valore salvato in questo periodo: il primo arriva al prossimo aggiornamento</div>'}
+      <div class="vl"></div><div class="tip"></div>
+    </div></div>
+    <div class="xax">${xs.map(x=>`<span>${x}</span>`).join('')}</div>
+    <div class="leg"><span><span style="width:16px;height:2px;background:#fff"></span>Valore</span><span><span style="width:16px;height:2px;background:#7C838D"></span>Versato</span></div>`;
+  const area_=el.querySelector('.area'),vline=el.querySelector('.vl'),tip=el.querySelector('.tip');
+  if(!pts.length)return;
+  const move=ev=>{
+    const r=area_.getBoundingClientRect();const fx=Math.min(Math.max((ev.clientX-r.left)/r.width,0),1);const t=t0+fx*(now-t0);
+    let best=pts[0];for(const p of pts)if(Math.abs(p[0]-t)<Math.abs(best[0]-t))best=p;
+    const lx=X(best[0])/10;vline.style.display='block';vline.style.left=lx+'%';
+    tip.style.display='block';tip.style.left=Math.min(Math.max(lx,14),86)+'%';
+    tip.innerHTML=`<b class="num">${eur(best[1])}</b> <span style="color:var(--mut)">· versato ${eur(versA(steps,best[0]))} · ${dFull(best[0])}</span>`;
+  };
+  const leave=()=>{vline.style.display='none';tip.style.display='none'};
+  area_.addEventListener('pointermove',move);area_.addEventListener('pointerdown',move);area_.addEventListener('pointerleave',leave);
+}
+function sparkline(k){
+  const h=D.storico.filter(r=>r[0]>=Date.now()-30*864e5&&hv(r,k)!=null);
+  if(h.length<3)return '';
+  const vs=h.map(r=>hv(r,k)),lo=Math.min(...vs),hi=Math.max(...vs),t0=h[0][0],t1=h[h.length-1][0];
+  const pts=h.map(r=>`${((r[0]-t0)/(t1-t0||1)*100).toFixed(1)},${(28-((hv(r,k)-lo)/(hi-lo||1))*24).toFixed(1)}`).join(' ');
+  return `<svg width="100%" height="32" viewBox="0 0 100 30" preserveAspectRatio="none" aria-label="Andamento ultimi 30 giorni"><polyline points="${pts}" fill="none" stroke="${vs[vs.length-1]>=vs[0]?'#5BD6A0':'#F2876B'}" stroke-width="1.8" vector-effect="non-scaling-stroke"/></svg>`;
+}
+
+/* ---------- pagine ---------- */
+function pHome(){
+  const tot=sezVal('tot');
+  const secs=['core','satellite','crypto','oro'];
+  const oroPeso=pesoOro();
+  const card=k=>{const v=sezVal(k),w=sezVer(k),d=v-w,info=SEZ[k];
+    const etf=D.posizioni.filter(p=>p.sezione===k),pacS=etf.reduce((a,p)=>a+(p.pac||0),0);
+    const n=k==='crypto'?'Kraken + Scalable · BTC, ETH, XRP':info.app+' · '+etf.length+' ETF · '+eur0(pacS)+'/mese';
+    return `<a href="#${k}" class="card sec-card">
+      <div class="row"><div style="display:flex;align-items:center;gap:8px;font-weight:600;font-size:14px">${dotLbl(info.col,info.nome)}</div><span class="mini">${f1.format(v/tot*100)}%</span></div>
+      <div class="num" style="font-size:30px;font-weight:500;letter-spacing:-.02em">${eur(v)}</div>
+      <div class="row" style="font-size:13px"><span style="color:var(--mut)">versato ${eur(w)}</span><span class="${cls(d)}" style="font-weight:600">${sP(w?d/w:0)}</span></div>
+      ${sparkline(k)}
+      <div class="mini" style="border-top:1px solid var(--line);padding-top:12px;display:flex;justify-content:space-between;gap:8px">${k==='oro'?`<span>${esc(info.app)} · ${f2.format(D.posizioni.find(p=>p.sezione==='oro').qta).replace(/,00$/,'')} g</span><span style="color:var(--oro)">oro ${f1.format(oroPeso*100)}% · obiettivo 10%</span>`:`<span>${esc(n)}</span>`}</div></a>`};
+  return headerHTML('home')+heroHTML('Valore totale · '+dFull(D.aggiornato),'tot')+chartCard('home','tot')+
+  `<section style="display:flex;flex-direction:column;gap:14px"><div class="row"><div class="h2">Allocazione</div><div class="sub">per valore attuale</div></div>
+   <div class="alloc">${secs.map(k=>`<div style="width:${(sezVal(k)/tot*100).toFixed(2)}%;background:${SEZ[k].col}" title="${SEZ[k].nome}"></div>`).join('')}</div></section>
+   <section class="grid">${secs.map(card).join('')}</section>`+footerHTML();
+}
+function pesoOro(){const gm=D.posizioni.find(p=>p.id==='GOLDMIN');return (sezVal('oro')+(gm?gm.valore:0))/sezVal('tot')}
+function etfCards(sez){
+  const list=D.posizioni.filter(p=>p.sezione===sez).sort((a,b)=>b.valore-a.valore);
+  const tot=list.reduce((a,p)=>a+p.valore,0), col=SEZ[sez].col;
+  return list.map(p=>{const d=p.valore-p.versato,w=p.valore/tot*100,ob=p.obiettivo||0;
+    return `<div class="card"><div style="display:flex;align-items:center;gap:12px"><div class="ico">${ICONS[p.icona]||''}</div>
+      <div style="display:flex;flex-direction:column;gap:3px;min-width:0"><div style="font-weight:600;font-size:14px">${esc(p.nome)}</div><div class="mini" style="color:var(--dim)">${esc(p.isin)}</div></div></div>
+      <div class="num" style="font-size:26px;font-weight:500;letter-spacing:-.02em">${eur(p.valore)}</div>
+      <div class="row" style="font-size:13px"><span style="color:var(--mut)">versato ${eur(p.versato)}</span><span class="${cls(d)}" style="font-weight:600">${sP(p.versato?d/p.versato:0)}</span></div>
+      <div style="display:flex;flex-direction:column;gap:6px;border-top:1px solid var(--line);padding-top:12px">
+        <div class="row mini"><span>pesa ${f1.format(w)}% · obiettivo ${ob}%</span><span>${eur0(p.pac||0)}/mese</span></div>
+        <div class="bar"><i style="width:${Math.min(w,100).toFixed(1)}%;background:${col}"></i><b style="left:${ob}%"></b></div></div></div>`}).join('');
+}
+function pEtf(sez){
+  const pac=D.posizioni.filter(p=>p.sezione===sez).reduce((a,p)=>a+(p.pac||0),0);
+  const es=D.posizioni.find(p=>p.sezione===sez&&p.pac);
+  const spieg=`La barra è quanto pesa oggi l'ETF nel ${sez==='core'?'Core':'Satellite'}. La tacca bianca è il peso che gli dai col PAC${es?`: ${eur0(es.pac)} su ${eur0(pac)} = ${f0.format(es.pac/pac*100)}%`:''}. Se la barra supera la tacca, quell'ETF sta correndo più degli altri.`;
+  return headerHTML(sez)+heroHTML(dotLbl(SEZ[sez].col,`${SEZ[sez].nome} · ${SEZ[sez].app} · ${eur0(pac)}/mese`),sez)+chartCard(sez,sez)+
+  `<section style="display:flex;flex-direction:column;gap:14px"><div class="row"><div class="h2">ETF</div><div class="sub">peso nel PAC</div></div>
+   <div class="note">${spieg}</div><div class="grid">${etfCards(sez)}</div></section>`+footerHTML();
+}
+function pCrypto(){
+  const app=(sez,nome,col)=>{const l=D.posizioni.filter(p=>p.sezione===sez),
+    vv=D.sezioni.valori[sez],w=D.sezioni.versati[sez],d=vv-w,tot=sezVal('crypto');
+    return `<div class="card big-pad"><div class="row"><div style="display:flex;align-items:center;gap:8px;font-weight:600;font-size:16px">${dotLbl(col,nome)}</div><span class="mini">${f1.format(vv/tot*100)}%</span></div>
+      <div style="display:flex;flex-direction:column;gap:8px"><div class="num" style="font-size:40px;font-weight:500;letter-spacing:-.03em;line-height:1">${eur(vv)}</div>
+      <div style="display:flex;flex-wrap:wrap;gap:10px;font-size:14px"><span class="${cls(d)}" style="font-weight:600">${sE(d)} · ${sP(w?d/w:0)}</span><span style="color:var(--mut)">su ${eur(w)} versati</span></div></div>
+      <div class="list" style="border-top:1px solid var(--line)">${l.map(p=>{const dd=p.valore-p.versato;return `<div><div style="display:flex;flex-direction:column;gap:2px"><span style="font-weight:600;font-size:14px">${esc(p.nome)}</span><span class="mini" style="color:var(--dim)">${String(p.qta).replace('.',',')} ${esc(p.ticker)}${p.ticker==='XRP'?' · <span class="n">regola: mai mediare</span>':''}</span></div>
+        <div style="display:flex;flex-direction:column;align-items:flex-end;gap:2px"><span class="num" style="font-size:16px">${eur(p.valore)}</span><span class="${cls(dd)}" style="font-size:12px;font-weight:600">${sP(p.versato?dd/p.versato:0)}</span></div></div>`}).join('')}</div></div>`};
+  const tot=sezVal('crypto'),kk=D.sezioni.valori.crypto_kraken/tot*100;
+  return headerHTML('crypto')+heroHTML(dotLbl('var(--cry)','Crypto · Kraken + Scalable'),'crypto')+chartCard('crypto','crypto')+
+  `<section style="display:flex;flex-direction:column;gap:14px"><div class="row"><div class="h2">Per app</div><div class="sub">peso sul totale crypto</div></div>
+   <div class="alloc"><div style="width:${kk.toFixed(2)}%;background:var(--cry)"></div><div style="width:${(100-kk).toFixed(2)}%;background:var(--cry2)"></div></div>
+   <div class="grid2">${app('crypto_kraken','Kraken','var(--cry)')}${app('crypto_scalable','Scalable','var(--cry2)')}</div></section>`+
+   footerHTML('Prezzi crypto da Kraken, 24/7 · Le crypto Scalable sono contate nel mese '+meseLbl(D.meseCryptoScalable||'2026-07'));
+}
+function pOro(){
+  const p=D.posizioni.find(x=>x.sezione==='oro'),v=sezVal('oro'),w=sezVer('oro'),g=p.qta||1,peso=pesoOro();
+  const acquisti=D.mensile.filter(m=>m.oro);
+  return headerHTML('oro')+heroHTML(`${ICONS.bar} Oro fisico · GoldAvenue · ${String(g).replace('.',',')} g`,'oro')+chartCard('oro','oro')+
+  `<section class="grid" style="grid-template-columns:repeat(auto-fit,minmax(300px,1fr))">
+   <div class="card"><div style="font-weight:600;font-size:14px">Prezzo per grammo</div>
+     <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px"><div><div class="mini">Carico medio</div><div class="num" style="font-size:24px">${eur(w/g)}</div></div><div><div class="mini">Valore attuale</div><div class="num" style="font-size:24px">${eur(v/g)}</div></div></div>
+     <div class="sub" style="border-top:1px solid var(--line);padding-top:12px">${v<w?`Per tornare in pari serve ${sP(w/v-1)}`:`In guadagno di ${sP(v/w-1)} sul prezzo di carico`}</div></div>
+   <div class="card"><div style="font-weight:600;font-size:14px">Acquisti</div><div class="list">${acquisti.map(m=>`<div><span style="color:var(--mut)">${meseLbl(m.mese)}</span><span class="num">${eur(m.oro)}</span></div>`).join('')}
+     <div><b>Totale</b><b class="num">${eur(w)}</b></div></div></div>
+   <div class="card"><div class="row"><div style="font-weight:600;font-size:14px">Peso oro sul portafoglio</div><div class="mini">fisico + Gold Mining</div></div>
+     <div class="num" style="font-size:24px;color:var(--oro)">${f1.format(peso*100)}% <span style="font-size:14px;color:var(--mut)">· obiettivo 10%</span></div>
+     <div class="bar"><i style="width:${Math.min(peso*100,100).toFixed(1)}%;background:var(--oro)"></i><b style="left:10%"></b></div>
+     <div class="sub" style="border-top:1px solid var(--line);padding-top:12px">Regola: nessun acquisto di oro finché il peso resta sopra l'obiettivo · verifica delle bande a dicembre</div></div>
+  </section>`+footerHTML('Valore = spot × grammi × fattore di riacquisto GoldAvenue');
+}
+function effettoMercato(k){
+  const h=D.storico,s=meseMs(k),[y,m]=k.split('-').map(Number),e=new Date(y,m,1).getTime();
+  let B=null,E=null;for(const r of h){if(r[0]<s)B=r;else if(r[0]<e){if(!B)B=r;E=r}}
+  if(!B||!E||B===E)return null;
+  return {d:(E[1]-B[1])-(E[2]-B[2]),da:B[0],a:E[0]};
+}
+function pRecap(){
+  const now=new Date(),kNow=now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0');
+  const em=effettoMercato(kNow), mm=D.mensile.find(x=>x.mese===kNow)||{};
+  const versMese=(mm.tr||0)+(mm.scalable||0)+(mm.kraken||0)+(mm.oro||0);
+  const secs=['core','satellite','crypto','oro'].map(k=>({k,r:(sezVal(k)-sezVer(k))/sezVer(k)})).sort((a,b)=>b.r-a.r);
+  const pos=D.posizioni.filter(p=>p.versato).map(p=>({p,r:p.valore/p.versato-1})).sort((a,b)=>b.r-a.r);
+  const best=secs[0],worst=secs[secs.length-1],bp=pos[0],wp=pos[pos.length-1];
+  let cum=0;const righe=D.mensile.map(m=>{const t=(m.tr||0)+(m.scalable||0)+(m.kraken||0)+(m.oro||0);cum+=t;return {m,t,cum,em:effettoMercato(m.mese)}}).reverse();
+  const c=v=>v?f2.format(v):'<span style="color:var(--dim)">—</span>';
+  return headerHTML('recap')+
+  `<section style="display:flex;flex-direction:column;gap:10px"><div class="sub" style="font-size:14px;font-weight:500">${MESIL[now.getMonth()]} ${now.getFullYear()} · in corso</div>
+   ${em?`<div class="num ${cls(em.d)}" style="font-size:52px;font-weight:500;letter-spacing:-.03em;line-height:1.05">${sE(em.d)}</div><div style="font-size:15px;color:var(--mut)">effetto mercato dal ${dShort(em.da)} · versati questo mese ${eur(versMese)}</div>`
+   :`<div class="num" style="font-size:44px;font-weight:500">${eur(versMese)} versati</div><div style="font-size:15px;color:var(--mut)">L'effetto mercato del mese compare dal secondo aggiornamento</div>`}</section>
+  <section class="grid" style="grid-template-columns:repeat(auto-fit,minmax(220px,1fr))">
+   <div class="card"><div class="sub">Versato nel mese</div><div class="num" style="font-size:28px">${eur(versMese)}</div><div class="mini" style="color:var(--dim)">${[['Trade Republic',mm.tr],['Scalable',mm.scalable],['Kraken',mm.kraken],['Oro',mm.oro]].filter(x=>x[1]).map(x=>x[0]+' '+eur0(x[1])).join(' · ')||'—'}</div></div>
+   <div class="card"><div class="sub">Migliore</div><div style="font-size:26px;font-weight:600" class="${cls(best.r)}">${SEZ[best.k].nome}</div><div class="mini" style="color:var(--dim)">${sP(best.r)} dall'inizio · ${esc(bp.p.nome)} ${sP(bp.r)}</div></div>
+   <div class="card"><div class="sub">Peggiore</div><div style="font-size:26px;font-weight:600" class="${cls(worst.r)}">${SEZ[worst.k].nome}</div><div class="mini" style="color:var(--dim)">${sP(worst.r)} dall'inizio · ${esc(wp.p.nome)} ${esc(wp.p.sezione==='crypto_kraken'?'(Kraken)':'')} ${sP(wp.r)}</div></div>
+   <div class="card"><div class="sub">Peso oro</div><div class="num" style="font-size:28px;color:var(--oro)">${f1.format(pesoOro()*100)}%</div><div class="mini" style="color:var(--dim)">obiettivo 10% · verifica bande a dicembre</div></div>
+  </section>
+  <section class="card big-pad"><div class="row"><div class="h2">Mese per mese</div><div class="sub">versamenti dal tuo foglio · effetto mercato dallo storico</div></div>
+   <div class="scroll"><table style="min-width:760px"><thead><tr><th>Mese</th><th>Trade Republic</th><th>Scalable</th><th>Kraken</th><th>Oro</th><th>Totale</th><th>Cumulato</th><th>Mercato</th></tr></thead><tbody>
+   ${righe.map(x=>`<tr><td>${meseLbl(x.m.mese)}</td><td>${c(x.m.tr)}</td><td>${c(x.m.scalable)}</td><td>${c(x.m.kraken)}</td><td>${c(x.m.oro)}</td><td style="font-weight:600">${f2.format(x.t)}</td><td>${f2.format(x.cum)}</td><td>${x.em?`<span class="${cls(x.em.d)}">${sE(x.em.d)}</span>`:'<span style="color:var(--dim)">—</span>'}</td></tr>`).join('')}
+   </tbody></table></div></section>`+footerHTML('Mercato = variazione del valore meno i versamenti del mese');
+}
+function proiezione(){
+  const V0=sezVal('tot'),W0=sezVer('tot'),P=D.pac||450,now=new Date();
+  const mesi=[];let y=now.getFullYear(),m=now.getMonth();
+  while(true){m++;if(m>11){m=0;y++}if(y>2030)break;mesi.push([y,m])}
+  const sc=[.03,.05,.07].map(r=>{const rm=Math.pow(1+r,1/12)-1;let v=V0;return [[Date.now(),V0]].concat(mesi.map(([yy,mm])=>{v=v*(1+rm)+P;return [new Date(yy,mm,28).getTime(),v]}))});
+  const ver=[[Date.now(),W0]].concat(mesi.map(([yy,mm],i)=>[new Date(yy,mm,28).getTime(),W0+P*(i+1)]));
+  return {sc,ver,P,anni:[...new Set(mesi.map(x=>x[0]))]};
+}
+function p2030(){
+  const pr=proiezione(),fin=i=>pr.sc[i][pr.sc[i].length-1][1],vfin=pr.ver[pr.ver.length-1][1];
+  const dic=(serie,y)=>{const r=serie.find(p=>{const d=new Date(p[0]);return d.getFullYear()===y&&d.getMonth()===11});return r?r[1]:null};
+  return headerHTML('2030')+
+  `<section style="display:flex;flex-direction:column;gap:10px"><div class="sub" style="font-size:14px;font-weight:500">Dicembre 2030 · scenario centrale 5% annuo</div>
+   <div class="big num">${eur0(fin(1))}</div>
+   <div style="display:flex;flex-wrap:wrap;align-items:center;gap:10px;font-size:15px"><span class="badge p">+${eur0(fin(1)-vfin)} di rendimento</span><span style="color:var(--mut)">su ${eur0(vfin)} versati · forchetta ${eur0(fin(0))} – ${eur0(fin(2))}</span></div></section>
+  <section class="card big-pad"><div class="h2">Da oggi a fine 2030</div><div class="chart" id="ch-2030"></div></section>
+  <section class="grid">${[['Prudente · 3% annuo',0],['Centrale · 5% annuo',1],['Favorevole · 7% annuo',2]].map(([n,i])=>`<div class="card" ${i===1?'style="border-color:#3A404A"':''}><div class="sub">${n}</div><div class="num" style="font-size:30px">${eur0(fin(i))}</div><div class="p" style="font-size:13px;font-weight:600">+${eur0(fin(i)-vfin)} sul versato</div></div>`).join('')}</section>
+  <section class="card big-pad"><div class="h2">Anno per anno · fine dicembre</div><div class="scroll"><table style="min-width:520px"><thead><tr><th>Anno</th><th>Versato</th><th>3%</th><th>5%</th><th>7%</th></tr></thead><tbody>
+   ${pr.anni.map(y=>`<tr><td>${y}</td><td>${eur0(dic(pr.ver,y))}</td><td>${eur0(dic(pr.sc[0],y))}</td><td style="font-weight:600">${eur0(dic(pr.sc[1],y))}</td><td>${eur0(dic(pr.sc[2],y))}</td></tr>`).join('')}
+  </tbody></table></div></section>`+
+  footerHTML(`Ipotesi: parte dal valore di oggi · PAC ${eur0(pr.P)}/mese costante · nessun lump-sum · esclusi TFR, pensione Allianz e aumenti futuri del PAC`);
+}
+function disegna2030(){
+  const el=document.getElementById('ch-2030');if(!el)return;
+  const pr=proiezione(),t0=pr.ver[0][0],t1=pr.ver[pr.ver.length-1][0],hi0=pr.sc[2][pr.sc[2].length-1][1];
+  const st=niceStep(hi0),hi=Math.ceil(hi0*1.05/st)*st,H=220,X=t=>(t-t0)/(t1-t0)*1000,Y=v=>12+(1-v/hi)*(H-24);
+  const pl=s=>s.map(p=>`${X(p[0]).toFixed(1)},${Y(p[1]).toFixed(1)}`).join(' ');
+  const band=pl(pr.sc[2])+' '+pr.sc[0].slice().reverse().map(p=>`${X(p[0]).toFixed(1)},${Y(p[1]).toFixed(1)}`).join(' ');
+  const ticks=[];for(let v=0;v<=hi;v+=st)ticks.push(v);
+  const xs=[t0].concat(pr.anni.slice(1).map(y=>new Date(y,0,1).getTime()));
+  el.innerHTML=`<div class="plot"><div class="yax" style="height:240px">${ticks.map(v=>`<span style="top:${(Y(v)/H*100).toFixed(2)}%">${eur0(v)}</span>`).join('')}</div>
+   <div class="area" style="height:240px"><svg height="240" viewBox="0 0 1000 ${H}" preserveAspectRatio="none" aria-label="Proiezione 2030">
+   ${ticks.map(v=>`<line x1="0" x2="1000" y1="${Y(v).toFixed(1)}" y2="${Y(v).toFixed(1)}" stroke="#1E2228" vector-effect="non-scaling-stroke"/>`).join('')}
+   <polygon points="${band}" fill="rgba(91,214,160,.13)"/>
+   <polyline points="${pl(pr.ver)}" fill="none" stroke="#7C838D" stroke-width="2" vector-effect="non-scaling-stroke"/>
+   <polyline points="${pl(pr.sc[1])}" fill="none" stroke="#FFFFFF" stroke-width="2.5" vector-effect="non-scaling-stroke"/></svg>
+   <div class="pt" style="left:0%;top:${(Y(pr.sc[1][0][1])/H*100).toFixed(2)}%"></div></div></div>
+   <div class="xax"><span>oggi</span>${pr.anni.slice(1).map(y=>`<span>${y}</span>`).join('')}</div>
+   <div class="leg"><span><span style="width:16px;height:2px;background:#fff"></span>Scenario 5%</span><span><span style="width:16px;height:10px;border-radius:2px;background:rgba(91,214,160,.3)"></span>Forchetta 3% – 7%</span><span><span style="width:16px;height:2px;background:#7C838D"></span>Versato</span></div>`;
+}
+
+/* ---------- router ---------- */
+function pagina(){const h=location.hash.replace('#','');return PAGES.some(p=>p[0]===h)?h:'home'}
+function render(){
+  const app=document.getElementById('app'),pg=pagina();
+  if(!D){return}
+  let html;
+  try{
+    html=pg==='home'?pHome():pg==='core'?pEtf('core'):pg==='satellite'?pEtf('satellite'):pg==='crypto'?pCrypto():pg==='oro'?pOro():pg==='recap'?pRecap():p2030();
+  }catch(e){html=`<div class="setup"><div class="banner">Errore nel disegnare la pagina: ${esc(e.message)}</div></div>`;console.error(e)}
+  app.innerHTML=`<div class="wrap">${html}</div>`;
+  if(pg==='2030')disegna2030();else{const id=pg==='home'?'home':pg;disegnaGrafico(id,pg==='home'?'tot':pg)}
+  const r=document.getElementById('reset');if(r)r.onclick=()=>{if(confirm('Scollegare questo dispositivo?')){localStorage.removeItem(LS_CODE);localStorage.removeItem(LS_DATA);D=null;setup()}};
+  app.querySelectorAll('[data-range]').forEach(b=>b.onclick=()=>{range[b.dataset.chart]=b.dataset.range;try{localStorage.setItem('patrimonio.range',JSON.stringify(range))}catch(e){}render()});
+}
+function setup(msg){
+  document.getElementById('app').innerHTML=`<form class="setup" id="f"><div class="brand"><div class="logo">${LOGO}</div>Patrimonio</div>
+   <div class="h2" style="font-size:22px">Collega la dashboard</div>
+   <div class="note">Incolla il codice che trovi nel foglio <b>Dash Config</b>, cella <b>CODICE_DASHBOARD</b>. Serve una sola volta per ogni dispositivo.</div>
+   ${msg?`<div class="banner">${esc(msg)}</div>`:''}
+   <label class="mini" for="c">Codice di accesso</label><input id="c" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="https://script.google.com/macros/s/…/exec?key=…">
+   <button class="go" type="submit">Collega</button></form>`;
+  document.getElementById('f').onsubmit=e=>{e.preventDefault();const v=document.getElementById('c').value.trim();if(!/^https:\/\/script\.google(usercontent)?\.com\/.+key=/.test(v)){setup('Il codice deve iniziare con https://script.google.com/ e contenere ?key=');return}
+    try{localStorage.setItem(LS_CODE,v)}catch(e){}carica(true)};
+}
+async function carica(primo){
+  let code=null;try{code=localStorage.getItem(LS_CODE)}catch(e){}
+  if(!code){setup();return}
+  if(primo&&!D)document.getElementById('app').innerHTML='<div class="load">Caricamento…</div>';
+  try{
+    const r=await fetch(code,{cache:'no-store'});const j=await r.json();
+    if(j.errore){if(!D)setup('Codice non valido: controlla di averlo copiato tutto.');return}
+    D=j;offline=false;errore='';try{localStorage.setItem(LS_DATA,JSON.stringify(j))}catch(e){}
+    render();
+  }catch(e){
+    offline=true;errore='Riprovo appena torna la connessione.';
+    if(!D){try{const c=localStorage.getItem(LS_DATA);if(c)D=JSON.parse(c)}catch(_){}}
+    if(D)render();else setup('Impossibile raggiungere i dati. Controlla la connessione o il codice.');
+  }
+}
+try{const r=localStorage.getItem('patrimonio.range');if(r)range=JSON.parse(r)}catch(e){}
+try{const c=localStorage.getItem(LS_DATA);if(c&&localStorage.getItem(LS_CODE)){D=JSON.parse(c);offline=false;render()}}catch(e){}
+window.addEventListener('hashchange',()=>{render();window.scrollTo(0,0)});
+document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')carica(false)});
+setInterval(()=>{if(document.visibilityState==='visible')carica(false)},15*60*1000);
+carica(true);
+})();
+</script>
+</body>
+</html>
