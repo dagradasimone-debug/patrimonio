@@ -2,6 +2,9 @@
 <html lang="it">
 <head>
 <meta charset="utf-8">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Patrimonio</title>
 <meta name="theme-color" content="#0B0D10">
@@ -505,8 +508,21 @@ async function carica(primo){
 }
 try{const r=localStorage.getItem('patrimonio.range');if(r)range=JSON.parse(r)}catch(e){}
 try{const c=localStorage.getItem(LS_DATA);if(c&&localStorage.getItem(LS_CODE)){D=JSON.parse(c);offline=false;render()}}catch(e){}
+const VERSIONE='2026-11-03';
+async function controllaVersione(){
+  try{
+    const r=await fetch(location.pathname+'?nc='+Date.now(),{cache:'no-store'});
+    const m=(await r.text()).match(/const VERSIONE='([^']+)'/);
+    if(m&&m[1]!==VERSIONE){
+      const k='patrimonio.reload.'+m[1];
+      if(sessionStorage.getItem(k))return;sessionStorage.setItem(k,'1');
+      location.replace(location.pathname+'?v='+m[1]+location.hash);
+    }
+  }catch(e){}
+}
 window.addEventListener('hashchange',()=>{render();window.scrollTo(0,0)});
-document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')carica(false)});
+document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'){carica(false);controllaVersione()}});
+controllaVersione();
 setInterval(()=>{if(document.visibilityState==='visible')carica(false)},15*60*1000);
 carica(true);
 })();
