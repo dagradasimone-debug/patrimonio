@@ -112,6 +112,12 @@ footer button{background:none;border:0;color:var(--dim);text-decoration:underlin
   .chart .yax{width:48px}
   .chart .xax,.chart .leg{padding-left:60px}
   .card{padding:16px}
+  table.fit{font-size:12.5px}
+  table.fit th,table.fit td{padding-left:6px}
+  table.fit th:first-child,table.fit td:first-child{padding-left:0}
+  table.fit .mini{display:none}
+  table.fit td,table.fit th{white-space:nowrap}
+  table.fit th:nth-child(4),table.fit td:nth-child(4){display:none}
 }
 </style>
 </head>
@@ -121,11 +127,11 @@ footer button{background:none;border:0;color:var(--dim);text-decoration:underlin
 (function(){
 'use strict';
 const LS_CODE='patrimonio.codice', LS_DATA='patrimonio.dati';
-const PAGES=[['home','Home'],['core','PAC Core'],['satellite','Satellite'],['crypto','Crypto'],['oro','Oro'],['azioni','Azioni'],['recap','Recap'],['2030','2030']];
+const PAGES=[['home','Home'],['core','PAC Core'],['satellite','Satellite'],['crypto','Crypto'],['oro','Oro'],['azioni','Azioni'],['mappa','Mappa'],['recap','Recap'],['2030','2030']];
 const IX={tot:[1,2],core:[3,8],satellite:[4,9],ck:[5,10],cs:[6,11],oro:[7,12],azioni:[13,14]};
 const SEZ={core:{nome:'PAC Core',col:'var(--core)',hex:'#7C9CFF',app:'Trade Republic'},satellite:{nome:'PAC Satellite',col:'var(--sat)',hex:'#5BD6A0',app:'Scalable'},crypto:{nome:'Crypto',col:'var(--cry)',hex:'#C79BFF',app:'Kraken + Scalable'},oro:{nome:'Oro fisico',col:'var(--oro)',hex:'#E3C77A',app:'GoldAvenue'},azioni:{nome:'Azioni',col:'var(--az)',hex:'#E88AB8',app:'Fondo occasioni'}};
 const RANGES=[['1S','1S'],['1M','1M'],['1A','1A'],['T','Tutto']];
-let D=null, offline=false, errore='', range={}, charts={};
+let D=null, offline=false, errore='', range={}, charts={}, mapPer='g', mapSel=null, recapMese=null;
 
 /* ---------- formattazione ---------- */
 const f2=new Intl.NumberFormat('it-IT',{minimumFractionDigits:2,maximumFractionDigits:2,useGrouping:'always'});
@@ -133,6 +139,7 @@ const f1=new Intl.NumberFormat('it-IT',{minimumFractionDigits:1,maximumFractionD
 const f0=new Intl.NumberFormat('it-IT',{maximumFractionDigits:0,useGrouping:'always'});
 const eur=v=>v==null?'—':f2.format(v)+' €';
 const eur0=v=>f0.format(v)+' €';
+const fq=v=>new Intl.NumberFormat('it-IT',{maximumSignificantDigits:6}).format(v);
 const sgn=(v,f)=>(v>0?'+':v<0?'−':'')+f.format(Math.abs(v));
 const sE=v=>sgn(v,f2)+' €';
 const sP=v=>sgn(v*100,f2)+'%';
@@ -182,13 +189,15 @@ function versMensile(k){
   }).filter(x=>x[1]);
 }
 function azSteps(){let last=null;return D.storico.filter(r=>r[14]!=null).filter(r=>{const ok=r[14]!==last;last=r[14];return ok}).map(r=>[r[0],r[14]])}
+// Versato nel tempo: prima dello storico dal foglio mese per mese, poi dallo storico stesso
+// (così la linea sale quando il versamento entra davvero, non il primo del mese).
 function versCum(k){
-  if(k==='azioni')return azSteps();
-  let c=0;const m=versMensile(k).map(([t,v])=>[t,c+=v]);
-  if(k!=='tot')return m;
-  const a=azSteps();if(!a.length)return m;
-  const ts=[...new Set(m.map(x=>x[0]).concat(a.map(x=>x[0])))].sort((x,y)=>x-y);
-  return ts.map(t=>[t,versA(m,t)+versA(a,t)]);
+  let c=0;const base=k==='azioni'?[]:versMensile(k).map(([t,v])=>[t,c+=v]);
+  const st=D.storico.filter(r=>hw(r,k)!=null);
+  if(!st.length)return base;
+  const out=base.filter(x=>x[0]<st[0][0]);let last=null;
+  for(const r of st){const w=hw(r,k);if(w!==last){out.push([r[0],w]);last=w}}
+  return out;
 }
 function versA(steps,t){let v=0;for(const s of steps){if(s[0]<=t)v=s[1];else break}return v}
 function variazioni(k){
@@ -207,7 +216,8 @@ function variazioni(k){
 function headerHTML(pg){
   return `<header><div class="brand"><div class="logo">${LOGO}</div>Patrimonio</div>
   <nav aria-label="Sezioni">${PAGES.map(([id,n])=>`<a href="#${id}" class="${id===pg?'on':''}">${n}</a>`).join('')}</nav></header>
-  ${offline?`<div class="banner">Offline: dati del ${dFull(D.aggiornato)}. ${esc(errore)}</div>`:''}`;
+  ${offline?`<div class="banner">Offline: dati del ${dFull(D.aggiornato)}. ${esc(errore)}</div>`:''}
+  ${D.disallineatoDal?`<div class="banner">Storico in pausa dal ${dFull(D.disallineatoDal)}: il versato nel foglio e le quote in Dash Posizioni non coincidono. Completa l'aggiornamento mensile (quantità + versato) e riparte da solo.</div>`:''}`;
 }
 function heroHTML(lbl,k,extra){
   const v=sezVal(k),w=sezVer(k),d=v-w,va=variazioni(k);
@@ -338,7 +348,7 @@ function pCrypto(){
     return `<div class="card big-pad"><div class="row"><div style="display:flex;align-items:center;gap:8px;font-weight:600;font-size:16px">${dotLbl(col,nome)}</div><span class="mini">${f1.format(vv/tot*100)}%</span></div>
       <div style="display:flex;flex-direction:column;gap:8px"><div class="num" style="font-size:40px;font-weight:500;letter-spacing:-.03em;line-height:1">${eur(vv)}</div>
       <div style="display:flex;flex-wrap:wrap;gap:10px;font-size:14px"><span class="${cls(d)}" style="font-weight:600">${sE(d)} · ${sP(w?d/w:0)}</span><span style="color:var(--mut)">su ${eur(w)} versati</span></div></div>
-      <div class="list" style="border-top:1px solid var(--line)">${l.map(p=>{const dd=p.valore-p.versato;return `<div><div style="display:flex;flex-direction:column;gap:2px"><span style="font-weight:600;font-size:14px">${esc(p.nome)}</span><span class="mini" style="color:var(--dim)">${String(p.qta).replace('.',',')} ${esc(p.ticker)}${p.ticker==='XRP'?' · <span class="n">regola: mai mediare</span>':''}</span></div>
+      <div class="list" style="border-top:1px solid var(--line)">${l.map(p=>{const dd=p.valore-p.versato;return `<div><div style="display:flex;flex-direction:column;gap:2px"><span style="font-weight:600;font-size:14px">${esc(p.nome)}</span><span class="mini" style="color:var(--dim)">${fq(p.qta)} ${esc(p.ticker)}${p.ticker==='XRP'?' · <span class="n">regola: mai mediare</span>':''}</span></div>
         <div style="display:flex;flex-direction:column;align-items:flex-end;gap:2px"><span class="num" style="font-size:16px">${eur(p.valore)}</span><span class="${cls(dd)}" style="font-size:12px;font-weight:600">${sP(p.versato?dd/p.versato:0)}</span></div></div>`}).join('')}</div></div>`};
   const tot=sezVal('crypto'),kk=D.sezioni.valori.crypto_kraken/tot*100;
   return headerHTML('crypto')+heroHTML(dotLbl('var(--cry)','Crypto · Kraken + Scalable'),'crypto')+chartCard('crypto','crypto')+
@@ -395,35 +405,169 @@ function pAzioni(){
     <div><span>Perdite</span><b>non si reintegrano</b></div>
    </div></section>`+footerHTML('Prezzi da Borsa Italiana · fondo separato dal PAC');
 }
-function effettoMercato(k){
-  const h=D.storico,s=meseMs(k),[y,m]=k.split('-').map(Number),e=new Date(y,m,1).getTime();
+/* ---------- recap ---------- */
+// Effetto mercato di un mese per una sezione: variazione del valore meno i versamenti, dallo storico.
+function effetto(k,mese){
+  const h=D.storico.filter(r=>hv(r,k)!=null&&hw(r,k)!=null),s=meseMs(mese),[y,m]=mese.split('-').map(Number),e=new Date(y,m,1).getTime();
   let B=null,E=null;for(const r of h){if(r[0]<s)B=r;else if(r[0]<e){if(!B)B=r;E=r}}
   if(!B||!E||B===E)return null;
-  return {d:(E[1]-B[1])-(E[2]-B[2]),da:B[0],a:E[0]};
+  const v0=hv(B,k),v1=hv(E,k),w0=hw(B,k),w1=hw(E,k),d=(v1-v0)-(w1-w0);
+  return {v0,v1,dv:w1-w0,d,p:v0?d/v0:0,da:B[0],a:E[0],pieno:B[0]<s};
+}
+function mesiRecap(){
+  const set=new Set(D.mensile.map(m=>m.mese));
+  D.storico.forEach(r=>{const d=new Date(r[0]);set.add(d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0'))});
+  return [...set].sort().reverse();
 }
 function pRecap(){
   const now=new Date(),kNow=now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0');
-  const em=effettoMercato(kNow), mm=D.mensile.find(x=>x.mese===kNow)||{};
-  const versMese=(mm.tr||0)+(mm.scalable||0)+(mm.kraken||0)+(mm.oro||0);
-  const secs=['core','satellite','crypto','oro'].concat(D.sezioni.valori.azioni?['azioni']:[]).map(k=>({k,r:(sezVal(k)-sezVer(k))/sezVer(k)})).sort((a,b)=>b.r-a.r);
-  const pos=D.posizioni.filter(p=>p.versato).map(p=>({p,r:p.valore/p.versato-1})).sort((a,b)=>b.r-a.r);
-  const best=secs[0],worst=secs[secs.length-1],bp=pos[0],wp=pos[pos.length-1];
-  let cum=0;const righe=D.mensile.map(m=>{const t=(m.tr||0)+(m.scalable||0)+(m.kraken||0)+(m.oro||0);cum+=t;return {m,t,cum,em:effettoMercato(m.mese)}}).reverse();
-  const c=v=>v?f2.format(v):'<span style="color:var(--dim)">—</span>';
+  const mesi=mesiRecap();if(!recapMese||mesi.indexOf(recapMese)<0)recapMese=mesi[0]||kNow;
+  const mk=recapMese,inCorso=mk===kNow,[yy,mm]=mk.split('-').map(Number);
+  const mv=D.mensile.find(x=>x.mese===mk)||{};
+  const versMese=(mv.tr||0)+(mv.scalable||0)+(mv.kraken||0)+(mv.oro||0);
+  const T=effetto('tot',mk);
+  const secs=['core','satellite','crypto','oro'].concat(D.sezioni.valori.azioni?['azioni']:[]);
+  const tile=(t,v,sub,c)=>`<div class="tile" style="padding:14px 16px"><div class="t">${t}</div><div class="v num ${c||''}" style="font-size:22px">${v}</div><div class="s" style="color:var(--dim)">${sub||'&nbsp;'}</div></div>`;
+  const piatt=[['Trade Republic',mv.tr],['Scalable',mv.scalable],['Kraken',mv.kraken],['Oro',mv.oro]].filter(x=>x[1]).map(x=>x[0]+' '+eur0(x[1])).join(' · ');
+  // asset del mese (solo mese in corso: prezzo da inizio mese)
+  let movers='';
+  if(inCorso&&D.mappa){const L=assetMappa().map(a=>({...a,pc:varAsset(a,'im')})).filter(a=>a.pc!=null).sort((a,b)=>b.pc-a.pc);
+    if(L.length>=2){const riga=a=>`<div><span style="display:flex;align-items:center;gap:8px"><span class="dot" style="background:${SEZ[a.sez].col}"></span>${esc(a.nome)}</span><b class="num ${cls(a.pc)}">${sP(a.pc)}</b></div>`;
+      movers=`<section class="grid2"><div class="card"><div class="row"><div style="font-weight:600;font-size:14px">I migliori del mese</div><div class="mini">prezzo da inizio mese</div></div><div class="list">${L.slice(0,3).map(riga).join('')}</div></div>
+      <div class="card"><div class="row"><div style="font-weight:600;font-size:14px">I peggiori del mese</div><div class="mini">prezzo da inizio mese</div></div><div class="list">${L.slice(-3).reverse().map(riga).join('')}</div></div></section>`}}
+  // controlli del mese
+  const pacOk=x=>x?`<b class="p">✓ ${eur0(x)}</b>`:`<b style="color:var(--dim)">non ancora</b>`;
+  const po=pesoOro();
+  const controlli=`<section class="card"><div style="font-weight:600;font-size:14px">Controlli</div><div class="list">
+    <div><span>PAC Trade Republic registrato</span>${pacOk(mv.tr)}</div>
+    <div><span>PAC Scalable registrato</span>${pacOk(mv.scalable)}</div>
+    <div><span>Peso oro (fisico + Gold Mining)</span><b class="num" style="color:${po>0.10?'var(--oro)':'var(--txt)'}">${f1.format(po*100)}% · ${po>0.10?'sopra il 10%: niente acquisti':'sotto il 10%'}</b></div>
+    <div><span>Storico</span>${D.disallineatoDal?'<b class="n">in pausa: versato e quote da allineare</b>':'<b class="p">allineato</b>'}</div></div></section>`;
+  const rigaSez=k=>{const x=effetto(k,mk);return `<tr><td><span style="display:inline-flex;align-items:center;gap:8px">${dotLbl(SEZ[k].col,SEZ[k].nome)}</span></td>
+    <td>${x&&x.dv?f2.format(x.dv):'<span style="color:var(--dim)">—</span>'}</td>
+    <td>${x?`<span class="${cls(x.d)}">${sE(x.d)}</span>`:'<span style="color:var(--dim)">—</span>'}</td>
+    <td>${x?`<span class="${cls(x.d)}">${sP(x.p)}</span>`:'<span style="color:var(--dim)">—</span>'}</td>
+    <td>${x?f2.format(x.v1):'—'}</td></tr>`};
+  const storia=mesi.map(m=>{const x=effetto('tot',m),v=D.mensile.find(z=>z.mese===m)||{};const vm=(v.tr||0)+(v.scalable||0)+(v.kraken||0)+(v.oro||0);
+    return `<tr data-mese="${m}" style="cursor:pointer${m===mk?';background:#1A1E24':''}"><td>${meseLbl(m)}${m===kNow?' <span class="mini">· in corso</span>':''}</td><td>${vm?f2.format(vm):'—'}</td>
+    <td>${x?`<span class="${cls(x.d)}">${sE(x.d)}</span>`:'<span style="color:var(--dim)">—</span>'}</td><td>${x?`<span class="${cls(x.d)}">${sP(x.p)}</span>`:'—'}</td><td>${x?f2.format(x.v1):'—'}</td></tr>`}).join('');
   return headerHTML('recap')+
-  `<section style="display:flex;flex-direction:column;gap:10px"><div class="sub" style="font-size:14px;font-weight:500">${MESIL[now.getMonth()]} ${now.getFullYear()} · in corso</div>
-   ${em?`<div class="num ${cls(em.d)}" style="font-size:52px;font-weight:500;letter-spacing:-.03em;line-height:1.05">${sE(em.d)}</div><div style="font-size:15px;color:var(--mut)">effetto mercato dal ${dShort(em.da)} · versati questo mese ${eur(versMese)}</div>`
-   :`<div class="num" style="font-size:44px;font-weight:500">${eur(versMese)} versati</div><div style="font-size:15px;color:var(--mut)">L'effetto mercato del mese compare dal secondo aggiornamento</div>`}</section>
-  <section class="grid" style="grid-template-columns:repeat(auto-fit,minmax(220px,1fr))">
-   <div class="card"><div class="sub">Versato nel mese</div><div class="num" style="font-size:28px">${eur(versMese)}</div><div class="mini" style="color:var(--dim)">${[['Trade Republic',mm.tr],['Scalable',mm.scalable],['Kraken',mm.kraken],['Oro',mm.oro]].filter(x=>x[1]).map(x=>x[0]+' '+eur0(x[1])).join(' · ')||'—'}</div></div>
-   <div class="card"><div class="sub">Migliore</div><div style="font-size:26px;font-weight:600" class="${cls(best.r)}">${SEZ[best.k].nome}</div><div class="mini" style="color:var(--dim)">${sP(best.r)} dall'inizio · ${esc(bp.p.nome)} ${sP(bp.r)}</div></div>
-   <div class="card"><div class="sub">Peggiore</div><div style="font-size:26px;font-weight:600" class="${cls(worst.r)}">${SEZ[worst.k].nome}</div><div class="mini" style="color:var(--dim)">${sP(worst.r)} dall'inizio · ${esc(wp.p.nome)} ${esc(wp.p.sezione==='crypto_kraken'?'(Kraken)':'')} ${sP(wp.r)}</div></div>
-   <div class="card"><div class="sub">Peso oro</div><div class="num" style="font-size:28px;color:var(--oro)">${f1.format(pesoOro()*100)}%</div><div class="mini" style="color:var(--dim)">obiettivo 10% · verifica bande a dicembre</div></div>
+  `<section style="display:flex;flex-direction:column;gap:14px">
+    <div class="seg" style="overflow-x:auto;scrollbar-width:none">${mesi.map(m=>`<button data-mese="${m}" class="${m===mk?'on':''}">${meseLbl(m)}</button>`).join('')}</div>
+    <div class="sub" style="font-size:14px;font-weight:500">${MESIL[mm-1]} ${yy}${inCorso?' · in corso':''}</div>
+    ${T?`<div class="num ${cls(T.d)}" style="font-size:52px;font-weight:500;letter-spacing:-.03em;line-height:1.05">${sE(T.d)} <span style="font-size:22px">${sP(T.p)}</span></div>
+       <div style="font-size:15px;color:var(--mut)">effetto mercato${T.pieno?'':' dal '+dShort(T.da)} · al netto dei versamenti</div>`
+      :`<div class="num" style="font-size:44px;font-weight:500">${eur(versMese)} versati</div><div style="font-size:15px;color:var(--mut)">Per questo mese lo storico non ha abbastanza punti per calcolare l'effetto mercato</div>`}
   </section>
-  <section class="card big-pad"><div class="row"><div class="h2">Mese per mese</div><div class="sub">versamenti dal tuo foglio · effetto mercato dallo storico</div></div>
-   <div class="scroll"><table style="min-width:760px"><thead><tr><th>Mese</th><th>Trade Republic</th><th>Scalable</th><th>Kraken</th><th>Oro</th><th>Totale</th><th>Cumulato</th><th>Mercato</th></tr></thead><tbody>
-   ${righe.map(x=>`<tr><td>${meseLbl(x.m.mese)}</td><td>${c(x.m.tr)}</td><td>${c(x.m.scalable)}</td><td>${c(x.m.kraken)}</td><td>${c(x.m.oro)}</td><td style="font-weight:600">${f2.format(x.t)}</td><td>${f2.format(x.cum)}</td><td>${x.em?`<span class="${cls(x.em.d)}">${sE(x.em.d)}</span>`:'<span style="color:var(--dim)">—</span>'}</td></tr>`).join('')}
-   </tbody></table></div></section>`+footerHTML('Mercato = variazione del valore meno i versamenti del mese');
+  ${T?`<section class="tiles" style="grid-template-columns:repeat(auto-fit,minmax(150px,1fr))">
+    ${tile(T.pieno?'Inizio mese':'Primo dato',eur(T.v0),dShort(T.da))}
+    ${tile('Versato',sE(T.dv),piatt||'nessun versamento',T.dv?'':'')}
+    ${tile('Mercato',sE(T.d),sP(T.p),cls(T.d))}
+    ${tile(inCorso?'Oggi':'Fine mese',eur(T.v1),dShort(T.a))}</section>`:''}
+  <section class="card big-pad"><div class="row"><div class="h2">Per sezione</div><div class="sub">${meseLbl(mk)}</div></div>
+   <div class="scroll"><table class="fit"><thead><tr><th>Sezione</th><th>Versato</th><th>Mercato</th><th>%</th><th>${inCorso?'Valore oggi':'Valore fine mese'}</th></tr></thead><tbody>
+   ${secs.map(rigaSez).join('')}</tbody></table></div></section>
+  ${movers}
+  ${inCorso?controlli:''}
+  <section class="card big-pad"><div class="row"><div class="h2">Mese per mese</div><div class="sub">tocca un mese per aprirlo</div></div>
+   <div class="scroll"><table class="fit"><thead><tr><th>Mese</th><th>Versato</th><th>Mercato</th><th>%</th><th>Valore fine</th></tr></thead><tbody>${storia}</tbody></table></div></section>`+
+  footerHTML('Mercato = variazione del valore meno i versamenti · lo storico parte dal 5 ottobre 2026');
+}
+
+/* ---------- mappa ---------- */
+const BREVE={SP500:'S&P 500',WORLD:'MSCI World',EM:'Emerging',SMALL:'Small Cap',SEMI:'Semiconduttori',GOLDMIN:'Gold Mining',BANKS:'Banche EU',USQI:'US Quality Inc.',FTSE:'FTSE 100',USQF:'US Quality',FIN:'Finanziari',PE:'Private Equity',ORO:'Oro fisico'};
+const SIGLA={SP500:'SP500',WORLD:'WORLD',EM:'EM',SMALL:'SMALL',SEMI:'SEMI',GOLDMIN:'GDX',BANKS:'BANK',USQI:'USQI',FTSE:'FTSE',USQF:'USQF',FIN:'FIN',PE:'PE',ORO:'ORO'};
+const PER=[['g','Giorno',.03],['s','Settimana',.06],['m','Mese',.10]];
+function assetMappa(){
+  const by={};
+  D.posizioni.filter(p=>p.tipo!=='cash'&&p.valore>0).forEach(p=>{
+    const key=p.tipo==='oro'?'ORO':p.ticker;if(!key)return;
+    const sez=p.sezione.indexOf('crypto')===0?'crypto':p.sezione;
+    if(!by[key])by[key]={key,sez,valore:0,
+      nome:p.tipo==='crypto'?p.nome:(BREVE[p.id]||p.nome),sigla:p.tipo==='crypto'?p.ticker:(SIGLA[p.id]||String(p.ticker).split('.')[0])};
+    by[key].valore+=p.valore;
+  });
+  return Object.values(by);
+}
+function varAsset(a,q){const m=D.mappa&&D.mappa[a.key];return m&&m[q]&&m[q][0]?m.p/m[q][0]-1:null}
+function coloreVar(v,scala){
+  if(v==null)return '#2A2F37';
+  const t=Math.min(Math.abs(v)/scala,1)**.75,a=[42,47,55],b=v>=0?[30,158,98]:[214,72,60];
+  return 'rgb('+a.map((x,i)=>Math.round(x+(b[i]-x)*t)).join(',')+')';
+}
+function squarify(items,x,y,w,h){
+  const out=[];let rest=items.filter(i=>i.a>0).sort((p,q)=>q.a-p.a);
+  const worst=(row,s)=>{const S=row.reduce((t,r)=>t+r.a,0),mx=Math.max(...row.map(r=>r.a)),mn=Math.min(...row.map(r=>r.a));return Math.max(s*s*mx/(S*S),S*S/(s*s*mn))};
+  while(rest.length){
+    const s=Math.min(w,h);let row=[rest[0]],i=1;
+    while(i<rest.length&&worst(row.concat(rest[i]),s)<=worst(row,s)){row.push(rest[i]);i++}
+    const S=row.reduce((t,r)=>t+r.a,0),k=S/s;
+    if(w>=h){let yy=y;row.forEach(r=>{const hh=r.a/k;out.push({...r,x,y:yy,w:k,h:hh});yy+=hh});x+=k;w-=k}
+    else{let xx=x;row.forEach(r=>{const ww=r.a/k;out.push({...r,x:xx,y,w:ww,h:k});xx+=ww});y+=k;h-=k}
+    rest=rest.slice(i);
+  }
+  return out;
+}
+function pMappa(){
+  const per=PER.find(p=>p[0]===mapPer)||PER[0];
+  if(!D.mappa||!Object.keys(D.mappa).length)return headerHTML('mappa')+`<section class="card big-pad"><div class="h2">Mappa</div><div class="note">La mappa compare dopo il primo aggiornamento con il nuovo codice dello script (alle 9:30, 14:30 o 22:00, oppure eseguendo <b>aggiornaDashboard</b>).</div></section>`+footerHTML();
+  const L=assetMappa().map(a=>({...a,pc:varAsset(a,per[0])}));
+  const ok=L.filter(a=>a.pc!=null),tv=ok.reduce((t,a)=>t+a.valore,0);
+  const media=tv?ok.reduce((t,a)=>t+a.valore*a.pc,0)/tv:null;
+  const su=ok.filter(a=>a.pc>0).length,giu=ok.filter(a=>a.pc<0).length;
+  const ord=ok.slice().sort((a,b)=>b.pc-a.pc),best=ord[0],worst=ord[ord.length-1];
+  const sel=L.find(a=>a.key===mapSel);
+  const m=sel&&D.mappa[sel.key];
+  const dett=sel?`<section class="card"><div class="row"><div style="display:flex;align-items:center;gap:8px;font-weight:600;font-size:16px">${dotLbl(SEZ[sel.sez].col,esc(sel.nome))}</div><div class="mini">${SEZ[sel.sez].nome} · ora ${eur(m.p)}</div></div>
+     <div class="tiles" style="min-width:0">${PER.map(([q,n])=>{const v=varAsset(sel,q);return `<div class="tile"><div class="t">${n}</div>${v==null?'<div class="v num" style="color:var(--dim)">—</div><div class="s">&nbsp;</div>':`<div class="v num ${cls(v)}">${sP(v)}</div><div class="s" style="color:var(--dim)">da ${eur(m[q][0])} · ${dShort(m[q][1])}</div>`}</div>`}).join('')}</div></section>`:'';
+  const scala=v=>`<span style="display:inline-block;width:14px;height:10px;border-radius:2px;background:${coloreVar(v,per[2])}"></span>`;
+  return headerHTML('mappa')+
+  `<section class="hero"><div style="display:flex;flex-direction:column;gap:10px;min-width:0">
+     <div class="lbl">Mappa · quanto si è mosso il prezzo</div>
+     <div class="big num ${media==null?'':cls(media)}">${media==null?'—':sP(media)}</div>
+     <div style="font-size:15px;color:var(--mut)">media dei tuoi asset pesata sul valore · ${per[1].toLowerCase()}</div></div>
+     <div class="tiles">
+       <div class="tile"><div class="t">In salita</div><div class="v num p">${su}</div><div class="s" style="color:var(--dim)">su ${ok.length}</div></div>
+       <div class="tile"><div class="t">Migliore</div><div class="v ${best?cls(best.pc):''}" style="font-size:15px;font-weight:600">${best?esc(best.nome):'—'}</div><div class="s ${best?cls(best.pc):''}">${best?sP(best.pc):''}</div></div>
+       <div class="tile"><div class="t">Peggiore</div><div class="v ${worst?cls(worst.pc):''}" style="font-size:15px;font-weight:600">${worst?esc(worst.nome):'—'}</div><div class="s ${worst?cls(worst.pc):''}">${worst?sP(worst.pc):''}</div></div>
+     </div></section>
+   <section class="card big-pad" style="gap:12px"><div class="row"><div class="h2">Per asset</div>
+     <div class="seg" role="group" aria-label="Periodo">${PER.map(([q,n])=>`<button data-mper="${q}" class="${q===per[0]?'on':''}">${n}</button>`).join('')}</div></div>
+     <div id="mappa" style="position:relative;width:100%"></div>
+     <div class="row mini"><span>Grandezza = peso nel portafoglio · colore = variazione del prezzo · tocca un riquadro</span>
+       <span style="display:flex;align-items:center;gap:4px">${scala(-per[2])}${scala(-per[2]/2)}${scala(0)}${scala(per[2]/2)}${scala(per[2])}<span style="margin-left:4px">±${f0.format(per[2]*100)}%</span></span></div></section>
+   ${dett}
+   <section class="card big-pad"><div class="row"><div class="h2">Classifica</div><div class="sub">${per[1]} · prezzo, non rendimento</div></div>
+     <div class="list">${L.slice().sort((a,b)=>(b.pc==null?-9:b.pc)-(a.pc==null?-9:a.pc)).map(a=>{const w=a.pc==null?0:Math.min(Math.abs(a.pc)/per[2],1)*50;
+       return `<div data-key="${esc(a.key)}" style="cursor:pointer"><span style="display:flex;align-items:center;gap:8px;min-width:0;flex:0 1 46%"><span class="dot" style="background:${SEZ[a.sez].col}"></span><span style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(a.nome)}</span></span>
+       <span style="flex:1;position:relative;height:6px;background:var(--line2);border-radius:3px"><i style="position:absolute;top:0;height:6px;border-radius:3px;${a.pc>=0?'left:50%':'right:50%'};width:${w.toFixed(1)}%;background:${a.pc==null?'transparent':a.pc>=0?'var(--pos)':'var(--neg)'}"></i><b style="position:absolute;left:50%;top:-3px;width:1px;height:12px;background:#3A404A"></b></span>
+       <b class="num ${a.pc==null?'':cls(a.pc)}" style="width:72px;text-align:right">${a.pc==null?'n.d.':sP(a.pc)}</b></div>`}).join('')}</div></section>`+
+  footerHTML('Giorno = ultima seduta rispetto alla precedente (crypto: dalla mezzanotte UTC) · Settimana e Mese = rispetto a 7 giorni e a un mese fa · prezzi, non rendimento');
+}
+function disegnaMappa(){
+  const el=document.getElementById('mappa');if(!el)return;
+  const per=PER.find(p=>p[0]===mapPer)||PER[0];
+  const W=el.clientWidth,H=Math.round(W<600?W*1.25:W*.52);el.style.height=H+'px';
+  const L=assetMappa().map(a=>({...a,pc:varAsset(a,per[0])}));
+  const ordine=['core','satellite','crypto','oro','azioni'];
+  const gruppi=ordine.map(k=>({k,items:L.filter(a=>a.sez===k)})).filter(g=>g.items.length);
+  const tot=L.reduce((t,a)=>t+a.valore,0);
+  const G=squarify(gruppi.map(g=>({k:g.k,items:g.items,a:g.items.reduce((t,a)=>t+a.valore,0)/tot*W*H})),0,0,W,H);
+  let html='';
+  G.forEach(g=>{
+    const head=g.h>60&&g.w>70?16:0,gap=2;
+    html+=`<div style="position:absolute;left:${g.x+gap/2}px;top:${g.y+gap/2}px;width:${g.w-gap}px;height:${g.h-gap}px;background:#0B0D10;border-radius:6px;overflow:hidden">
+      ${head?`<div style="position:absolute;left:6px;top:2px;font-size:10px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:${SEZ[g.k].col};white-space:nowrap">${SEZ[g.k].nome}</div>`:''}`;
+    const iw=g.w-gap,ih=g.h-gap-head,area=g.items.reduce((t,a)=>t+a.valore,0);
+    squarify(g.items.map(a=>({...a,a:a.valore/area*iw*ih})),0,head,iw,ih).forEach(t=>{
+      const s=Math.min(t.w,t.h),fs=Math.max(10,Math.min(22,s/4.2)),big=t.w>=80&&t.h>=48,mostra=t.w>=34&&t.h>=34,riga=!mostra&&t.w>=64&&t.h>=16;
+      const nome=big?t.nome:t.sigla;
+      html+=`<button data-key="${esc(t.key)}" aria-label="${esc(t.nome)} ${t.pc==null?'n.d.':sP(t.pc)}" style="position:absolute;left:${t.x+1}px;top:${t.y+1}px;width:${Math.max(t.w-2,0)}px;height:${Math.max(t.h-2,0)}px;background:${coloreVar(t.pc,per[2])};border:${t.key===mapSel?'2px solid #fff':'0'};border-radius:4px;padding:2px;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;overflow:hidden;color:#fff;text-align:center;line-height:1.1">
+        ${mostra?`<span style="font-weight:700;font-size:${fs.toFixed(0)}px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%">${esc(nome)}</span><span class="num" style="font-size:${Math.max(10,fs*.72).toFixed(0)}px;opacity:.92">${t.pc==null?'n.d.':sP(t.pc)}</span>`:riga?`<span style="font-size:10px;font-weight:600;white-space:nowrap">${esc(t.sigla)} ${t.pc==null?'':sP(t.pc)}</span>`:''}</button>`;
+    });
+    html+='</div>';
+  });
+  el.innerHTML=html;
 }
 function proiezione(){
   const V0=sezVal('tot'),W0=sezVer('tot'),P=D.pac||450,now=new Date();
@@ -473,11 +617,14 @@ function render(){
   if(!D){return}
   let html;
   try{
-    html=pg==='home'?pHome():pg==='core'?pEtf('core'):pg==='satellite'?pEtf('satellite'):pg==='crypto'?pCrypto():pg==='oro'?pOro():pg==='azioni'?pAzioni():pg==='recap'?pRecap():p2030();
+    html=pg==='home'?pHome():pg==='core'?pEtf('core'):pg==='satellite'?pEtf('satellite'):pg==='crypto'?pCrypto():pg==='oro'?pOro():pg==='azioni'?pAzioni():pg==='mappa'?pMappa():pg==='recap'?pRecap():p2030();
   }catch(e){html=`<div class="setup"><div class="banner">Errore nel disegnare la pagina: ${esc(e.message)}</div></div>`;console.error(e)}
   app.innerHTML=`<div class="wrap">${html}</div>`;
-  if(pg==='2030')disegna2030();else{const id=pg==='home'?'home':pg;disegnaGrafico(id,pg==='home'?'tot':pg)}
+  if(pg==='2030')disegna2030();else if(pg==='mappa')disegnaMappa();else if(pg==='recap'){}else{const id=pg==='home'?'home':pg;disegnaGrafico(id,pg==='home'?'tot':pg)}
   const r=document.getElementById('reset');if(r)r.onclick=()=>{if(confirm('Scollegare questo dispositivo?')){localStorage.removeItem(LS_CODE);localStorage.removeItem(LS_DATA);D=null;setup()}};
+  app.querySelectorAll('[data-mper]').forEach(b=>b.onclick=()=>{mapPer=b.dataset.mper;try{localStorage.setItem('patrimonio.mper',mapPer)}catch(e){}render()});
+  app.querySelectorAll('[data-mese]').forEach(b=>b.onclick=()=>{recapMese=b.dataset.mese;render()});
+  app.onclick=e=>{const t=e.target.closest('[data-key]');if(!t||pg!=='mappa')return;mapSel=mapSel===t.dataset.key?null:t.dataset.key;const y=window.scrollY;render();window.scrollTo(0,y)};
   app.querySelectorAll('[data-range]').forEach(b=>b.onclick=()=>{range[b.dataset.chart]=b.dataset.range;try{localStorage.setItem('patrimonio.range',JSON.stringify(range))}catch(e){}render()});
 }
 function setup(msg){
@@ -506,9 +653,9 @@ async function carica(primo){
     if(D)render();else setup('Impossibile raggiungere i dati. Controlla la connessione o il codice.');
   }
 }
-try{const r=localStorage.getItem('patrimonio.range');if(r)range=JSON.parse(r)}catch(e){}
+try{const r=localStorage.getItem('patrimonio.range');if(r)range=JSON.parse(r);mapPer=localStorage.getItem('patrimonio.mper')||'g'}catch(e){}
 try{const c=localStorage.getItem(LS_DATA);if(c&&localStorage.getItem(LS_CODE)){D=JSON.parse(c);offline=false;render()}}catch(e){}
-const VERSIONE='2026-11-03';
+const VERSIONE='2026-11-16';
 async function controllaVersione(){
   try{
     const r=await fetch(location.pathname+'?nc='+Date.now(),{cache:'no-store'});
@@ -521,6 +668,7 @@ async function controllaVersione(){
   }catch(e){}
 }
 window.addEventListener('hashchange',()=>{render();window.scrollTo(0,0)});
+let rzT=null;window.addEventListener('resize',()=>{clearTimeout(rzT);rzT=setTimeout(()=>{if(pagina()==='mappa')disegnaMappa()},150)});
 document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'){carica(false);controllaVersione()}});
 controllaVersione();
 setInterval(()=>{if(document.visibilityState==='visible')carica(false)},15*60*1000);
