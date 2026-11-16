@@ -517,8 +517,8 @@ function pMappa(){
   const su=ok.filter(a=>a.pc>0).length,giu=ok.filter(a=>a.pc<0).length;
   const ord=ok.slice().sort((a,b)=>b.pc-a.pc),best=ord[0],worst=ord[ord.length-1];
   const sel=L.find(a=>a.key===mapSel);
-  const m=sel&&D.mappa[sel.key];
-  const dett=sel?`<section class="card"><div class="row"><div style="display:flex;align-items:center;gap:8px;font-weight:600;font-size:16px">${dotLbl(SEZ[sel.sez].col,esc(sel.nome))}</div><div class="mini">${SEZ[sel.sez].nome} · ora ${eur(m.p)}</div></div>
+  const m=(sel&&D.mappa[sel.key])||{};
+  const dett=sel?`<section class="card"><div class="row"><div style="display:flex;align-items:center;gap:8px;font-weight:600;font-size:16px">${dotLbl(SEZ[sel.sez].col,esc(sel.nome))}</div><div class="mini">${SEZ[sel.sez].nome}${m.p?' · ora '+eur(m.p):' · prezzo storico non disponibile: controlla il ticker in Dash Posizioni'}</div></div>
      <div class="tiles" style="min-width:0">${PER.map(([q,n])=>{const v=varAsset(sel,q);return `<div class="tile"><div class="t">${n}</div>${v==null?'<div class="v num" style="color:var(--dim)">—</div><div class="s">&nbsp;</div>':`<div class="v num ${cls(v)}">${sP(v)}</div><div class="s" style="color:var(--dim)">da ${eur(m[q][0])} · ${dShort(m[q][1])}</div>`}</div>`}).join('')}</div></section>`:'';
   const scala=v=>`<span style="display:inline-block;width:14px;height:10px;border-radius:2px;background:${coloreVar(v,per[2])}"></span>`;
   return headerHTML('mappa')+
@@ -655,7 +655,7 @@ async function carica(primo){
 }
 try{const r=localStorage.getItem('patrimonio.range');if(r)range=JSON.parse(r);mapPer=localStorage.getItem('patrimonio.mper')||'g'}catch(e){}
 try{const c=localStorage.getItem(LS_DATA);if(c&&localStorage.getItem(LS_CODE)){D=JSON.parse(c);offline=false;render()}}catch(e){}
-const VERSIONE='2026-11-16';
+const VERSIONE='2026-11-16b';
 async function controllaVersione(){
   try{
     const r=await fetch(location.pathname+'?nc='+Date.now(),{cache:'no-store'});
